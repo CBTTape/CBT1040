@@ -1,0 +1,41 @@
+/* REXX    ALLPLIB    Find all the PLILIB material in the Configuration
+                      Components section of a compiler listing and
+                      return it in the queue.  The calling routine must
+                      establish the queue before this routine is
+                      called.
+
+           Written by Frank Clarke 20060905 rexxhead@yahoo.com
+
+     Impact Analysis
+.    SYSEXEC   SEGMENT
+
+     Modification History
+     ccyymmdd ... ..........
+                  ...
+
+*/
+address ISREDIT
+"MACRO (opts)"
+upper opts
+parse var opts "TRACE" tv .
+parse value tv "N" with tv .
+rc = Trace(tv)
+
+"SEGMENT LABELS"                       /* send label list back       */
+address ISPEXEC "VGET LBLLIST SHARED"
+"SEGMENT"                              /* set labels on lines        */
+if WordPos(".CNFG",lbllist) > 0 then,
+   do
+   "X ALL"
+   tag = "FIRST"
+   do forever
+      "F '.PLILIB' .CNFG .LINK" tag
+      if rc > 0 then leave
+      tag = "NEXT"
+      "(text) = LINE .ZCSR"            /* acquire the text           */
+      parse var text  2 .  .  ref  .
+      queue ref
+   end                                 /* forever                    */
+   end
+"END"
+exit                                   /*@ ALLPLIB                   */
