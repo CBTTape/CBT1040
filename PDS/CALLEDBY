@@ -1,0 +1,29 @@
+/* REXX   For PL/1 text, acquires all labels and all calls; builds
+           relationship between called routines and the label from
+           which the routine was called.
+
+           Requires STRSORT
+*/
+address ISREDIT
+"MACRO"
+parse value "" with rtnlist called_by.
+"F p'¬' LAST"
+"(lastline,lc) = CURSOR"               /* set lastline               */
+do ii = 1 to lastline
+   "(text) = LINE" ii                  /* acquire text               */
+   parse var text w1 .                 /*                            */
+   if Right(w1,1) = ":" then parse var w1 lbl ":" .
+   else do
+      if Wordpos("CALL",text) > 0 then parse var text " CALL " rtn .
+                                  else iterate
+      parse var rtn  rtn "("  .
+      called_by.rtn = called_by.rtn lbl
+      if Wordpos(rtn,rtnlist) = 0 then rtnlist = rtnlist rtn
+      end                              /* not a label                */
+end  /* ii */
+rtnlist = STRSORT(rtnlist)
+do Words(rtnlist)
+   parse var rtnlist rtn rtnlist
+   say "("Left(rtn,15)")" called_by.rtn
+end
+exit

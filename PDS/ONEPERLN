@@ -1,0 +1,32 @@
+/* REXX    ONEPERLN     Finds PL/I source lines which contain more than
+                        one semicolon so that they may be split.
+*/
+address ISREDIT
+"MACRO (opts)"
+upper opts
+parse var opts "TRACE" tv .
+parse value tv "N" with tv .
+rc = Trace("O"); rc = Trace(tv)
+sw_displ = WordPos("DISPLAY",opts) > 0
+
+"RESET"
+"RENUM"
+"UNNUM"
+"X ALL"
+seq = "FIRST"
+do forever
+   "SEEK ';'" seq                      /* locate next  semicolon     */
+   seq = "NEXT"
+   if rc > 0 then leave                /* didn't find one            */
+   "(txt) = LINE .zcsr"                /* acquire line               */
+   parse var txt front ";" back
+   if Pos(";",back) > 0 then do        /* found another              */
+      "XSTATUS .zcsr = NX"             /* show this line             */
+      if sw_displ then iterate
+      "C ';' ';' "                     /* position cursor after      */
+      "TSPLIT"                         /* split line                 */
+      end
+end                                    /* forever                    */
+"F ';' FIRST NX"                       /* position to top            */
+
+exit 1                                 /*@ ONEPERLN                  */
